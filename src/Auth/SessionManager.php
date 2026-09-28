@@ -99,8 +99,6 @@ final class SessionManager
         ini_set('session.cookie_secure', '1');
         ini_set('session.cookie_httponly', '1');
         ini_set('session.cookie_samesite', 'Lax');
-        ini_set('session.sid_length', '48');
-        ini_set('session.sid_bits_per_character', '6');
 
         if (!session_start()) {
             throw new RuntimeException(
@@ -342,7 +340,7 @@ final class SessionManager
         return session_id();
     }
 
-    public static function destroy(): void
+        public static function destroy(): void
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             self::$started = false;
@@ -352,7 +350,11 @@ final class SessionManager
 
         $_SESSION = [];
 
-        if (ini_get('session.use_cookies')) {
+        if (
+            PHP_SAPI !== 'cli'
+            && ini_get('session.use_cookies')
+            && !headers_sent()
+        ) {
             $parameters = session_get_cookie_params();
 
             setcookie(

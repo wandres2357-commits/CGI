@@ -98,10 +98,19 @@ echo 'Nombre de sesión: '
     . session_name()
     . PHP_EOL;
 
-echo 'Longitud del ID de sesión: '
-    . strlen(
-        SessionManager::id()
-    )
+$sessionId = SessionManager::id();
+
+if ($sessionId === '') {
+    fwrite(
+        STDERR,
+        'ERROR: no se generó un identificador de sesión.'
+        . PHP_EOL
+    );
+
+    exit(1);
+}
+
+echo 'Identificador de sesión generado: correcto.'
     . PHP_EOL;
 
 echo 'Token CSRF generado: correcto.'
