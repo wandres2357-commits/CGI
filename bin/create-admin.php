@@ -231,7 +231,7 @@ try {
 
         $continue = strtolower(
             readInput(
-                '¿Desea crear otro administrador? [s/N\]: '
+                '¿Desea crear otro administrador? [s/N]: '
             )
         );
 
