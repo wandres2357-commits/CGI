@@ -1,0 +1,5 @@
+<?php
+declare(strict_types=1);
+namespace App\Config;
+use RuntimeException;
+final class Env { private static array $v=[]; public static function load(string $p):void { if(!is_readable($p)) throw new RuntimeException('No se puede leer .env'); foreach(file($p, FILE_IGNORE_NEW_LINES|FILE_SKIP_EMPTY_LINES)?:[] as $l){$l=trim($l); if($l===''||str_starts_with($l,'#')||!str_contains($l,'='))continue; [$k,$x]=array_map('trim',explode('=',$l,2)); self::$v[$k]=trim($x,"\"'");}} public static function get(string $k,?string $d=null):?string{return self::$v[$k]??getenv($k)?:$d;} public static function require(string $k):string{$v=self::get($k);if($v===null||trim($v)==='')throw new RuntimeException("Falta $k");return $v;} public static function bool(string $k,bool $d=false):bool{$v=self::get($k);return $v===null?$d:filter_var($v,FILTER_VALIDATE_BOOLEAN);} public static function int(string $k,int $d=0):int{$v=self::get($k);return $v!==null&&is_numeric($v)?(int)$v:$d;} }
