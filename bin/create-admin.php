@@ -16,7 +16,7 @@ require dirname(__DIR__)
     . 'bootstrap.php';
 
 /**
- * Lee una lÃ­nea desde la consola.
+ * Lee una línea desde la consola.
  */
 function readInput(string $message): string
 {
@@ -34,7 +34,7 @@ function readInput(string $message): string
 }
 
 /**
- * Lee una contraseÃ±a sin mostrarla en una terminal Unix.
+ * Lee una contraseña sin mostrarla en una terminal Unix.
  *
  * El comando debe ejecutarse mediante SSH en alwaysdata.
  */
@@ -42,7 +42,7 @@ function readHiddenPassword(string $message): string
 {
     if (PHP_OS_FAMILY === 'Windows') {
         throw new RuntimeException(
-            'La captura oculta de contraseÃ±a debe ejecutarse '
+            'La captura oculta de contraseña debe ejecutarse '
             . 'desde la terminal SSH de alwaysdata.'
         );
     }
@@ -68,7 +68,7 @@ function readHiddenPassword(string $message): string
 
         if ($password === false) {
             throw new RuntimeException(
-                'No fue posible leer la contraseÃ±a.'
+                'No fue posible leer la contraseña.'
             );
         }
 
@@ -106,15 +106,15 @@ function validateUsername(string $username): array
         ) !== 1
     ) {
         $errors[] =
-            'El usuario solo puede contener letras minÃºsculas, '
-            . 'nÃºmeros, punto, guion y guion bajo.';
+            'El usuario solo puede contener letras minúsculas, '
+            . 'números, punto, guion y guion bajo.';
     }
 
     return $errors;
 }
 
 /**
- * Valida la contraseÃ±a inicial.
+ * Valida la contraseña inicial.
  */
 function validatePassword(string $password): array
 {
@@ -122,27 +122,27 @@ function validatePassword(string $password): array
 
     if (strlen($password) < 12) {
         $errors[] =
-            'La contraseÃ±a debe tener al menos 12 caracteres.';
+            'La contraseña debe tener al menos 12 caracteres.';
     }
 
     if (strlen($password) > 128) {
         $errors[] =
-            'La contraseÃ±a no puede superar 128 caracteres.';
+            'La contraseña no puede superar 128 caracteres.';
     }
 
     if (preg_match('/[a-z]/', $password) !== 1) {
         $errors[] =
-            'La contraseÃ±a debe incluir una letra minÃºscula.';
+            'La contraseña debe incluir una letra minúscula.';
     }
 
     if (preg_match('/[A-Z]/', $password) !== 1) {
         $errors[] =
-            'La contraseÃ±a debe incluir una letra mayÃºscula.';
+            'La contraseña debe incluir una letra mayúscula.';
     }
 
     if (preg_match('/[0-9]/', $password) !== 1) {
         $errors[] =
-            'La contraseÃ±a debe incluir un nÃºmero.';
+            'La contraseña debe incluir un número.';
     }
 
     if (
@@ -152,14 +152,14 @@ function validatePassword(string $password): array
         ) !== 1
     ) {
         $errors[] =
-            'La contraseÃ±a debe incluir un carÃ¡cter especial.';
+            'La contraseña debe incluir un carácter especial.';
     }
 
     return $errors;
 }
 
 /**
- * Imprime errores de validaciÃ³n.
+ * Imprime errores de validación.
  */
 function printErrors(array $errors): void
 {
@@ -180,7 +180,7 @@ fwrite(
     PHP_EOL
     . '========================================'
     . PHP_EOL
-    . ' CreaciÃ³n del primer administrador'
+    . ' Creación del primer administrador'
     . PHP_EOL
     . '========================================'
     . PHP_EOL
@@ -231,14 +231,14 @@ try {
 
         $continue = strtolower(
             readInput(
-                'Â¿Desea crear otro administrador? [s/N\]: '
+                '¿Desea crear otro administrador? [s/N\]: '
             )
         );
 
-        if (!in_array($continue, ['s', 'si', 'sÃ­'], true)) {
+        if (!in_array($continue, ['s', 'si', 'sí'], true)) {
             fwrite(
                 STDOUT,
-                'OperaciÃ³n cancelada.'
+                'Operación cancelada.'
                 . PHP_EOL
             );
 
@@ -291,7 +291,7 @@ try {
         if (!$emailIsValid || strlen($email) > 254) {
             fwrite(
                 STDERR,
-                '- Ingrese un correo electrÃ³nico vÃ¡lido.'
+                '- Ingrese un correo electrónico válido.'
                 . PHP_EOL
             );
 
@@ -301,7 +301,7 @@ try {
 
     do {
         $password = readHiddenPassword(
-            'ContraseÃ±a inicial: '
+            'Contraseña inicial: '
         );
 
         $passwordErrors = validatePassword($password);
@@ -312,18 +312,18 @@ try {
         }
 
         $confirmation = readHiddenPassword(
-            'Confirme la contraseÃ±a: '
+            'Confirme la contraseña: '
         );
 
         if (!hash_equals($password, $confirmation)) {
             fwrite(
                 STDERR,
-                '- Las contraseÃ±as no coinciden.'
+                '- Las contraseñas no coinciden.'
                 . PHP_EOL
             );
 
             $passwordErrors = [
-                'Las contraseÃ±as no coinciden.',
+                'Las contraseñas no coinciden.',
             ];
         }
     } while ($passwordErrors !== []);
@@ -356,7 +356,7 @@ try {
 
     if ($passwordHash === false) {
         throw new RuntimeException(
-            'No fue posible generar el hash de contraseÃ±a.'
+            'No fue posible generar el hash de contraseña.'
         );
     }
 
@@ -446,7 +446,7 @@ try {
             )'
         );
 
-        $auditStatement->execute([
+         $auditStatement->execute([
             'usuario_id' => $userId,
             'agente_usuario' => 'CLI bin/create-admin.php',
             'modulo' => 'USUARIOS',
@@ -455,19 +455,19 @@ try {
             'entidad_id' => $userId,
             'valores_nuevos' => $auditValues,
             'resultado' => 'EXITOSO',
-            'motivo' => 'CreaciÃ³n segura desde consola',
+            'motivo' => 'Creación segura desde consola',
         ]);
 
         $pdo->commit();
 
         if (function_exists('sodium_memzero')) {
-    sodium_memzero($password);
-    sodium_memzero($confirmation);
-}
+            sodium_memzero($password);
+            sodium_memzero($confirmation);
+        }
 
-$password = '';
-$confirmation = '';
-$passwordHash = '';
+        $password = '';
+        $confirmation = '';
+        $passwordHash = '';
 
         fwrite(
             STDOUT,
@@ -489,7 +489,7 @@ $passwordHash = '';
                 $email,
                 PHP_EOL
             )
-            . 'Cambio de contraseÃ±a requerido: sÃ­'
+            . 'Cambio de contraseña requerido: sí'
             . PHP_EOL
         );
     } catch (\Throwable $exception) {
@@ -512,4 +512,3 @@ $passwordHash = '';
 
     exit(1);
 }
-\ No newline at end of file
