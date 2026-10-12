@@ -14,9 +14,6 @@ use RuntimeException;
 
 final class AuthService
 {
-    private const GENERIC_FAILURE =
-        'No fue posible iniciar sesión.';
-
     private const DUMMY_PASSWORD_HASH =
         '$2y$12$abcdefghijklmnopqrstuu'
         . '7QyVjfnqY9rZkBvUwPsPV7bRwg9yK';
@@ -254,11 +251,10 @@ final class AuthService
         $this->pdo->beginTransaction();
 
         try {
-            $attempts =
-                $this->users
-                    ->incrementFailedAttempts(
-                        (int) $user['id']
-                    );
+            $attempts = $this->users
+                ->incrementFailedAttempts(
+                    (int) $user['id']
+                );
 
             $reason = 'CREDENCIALES_INVALIDAS';
 
@@ -392,8 +388,144 @@ final class AuthService
                 userAgent: $userAgent
             );
 
-            $closedSessions =
-                $this->sessions
-                    ->closeOldestUntilLimit(
-                        userId: (int) $user['id'],
-                       
+            $closedSessions = $this->sessions
+                ->closeOldestUntilLimit(
+                    userId: (int) $user['id'],
+                    maximumSessions:
+                        $maximumSessions,
+                    currentSessionId:
+                        $sessionId
+                );
+
+            $this->audit->recordAuthentication(
+                userId: (int) $user['id'],
+                action: 'INICIO_SESION',
+                result: 'EXITOSO',
+                reason: 'CREDENCIALES_VALIDAS',
+                identifier: $identifier,
+                ipAddress: $ipAddress,
+                userAgent: $userAgent
+            );
+
+            if ($closedSessions !== []) {
+                $this->audit->record(
+                    userId: (int) $user['id'],
+                    module: 'AUTENTICACION',
+                    action:
+                        'CIERRE_SESIONES_ANTIGUAS',
+                    result: 'EXITOSO',
+                    entityType: 'USUARIO',
+                    entityId: (int) $user['id'],
+                    newValues: [
+                        'cantidad' =>
+                            count($closedSessions),
+                    ],
+                    reason:
+                        'LIMITE_SESIONES_SIMULTANEAS',
+                    ipAddress: $ipAddress,
+                    userAgent: $userAgent
+                );
+            }
+
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            SessionManager::destroy();
+
+            throw $exception;
+        }
+
+        $freshUser = $this->users->findById(
+            (int) $user['id']
+        );
+
+        if ($freshUser === null) {
+            $this->sessions->close(
+                $sessionId,
+                'ERROR_POST_AUTENTICACION'
+            );
+
+            SessionManager::destroy();
+
+            throw new RuntimeException(
+                'No fue posible recuperar '
+                . 'el usuario autenticado.'
+            );
+        }
+
+        return AuthResult::success($freshUser);
+    }
+
+    private function clearExpiredBlock(
+        array $user
+    ): array {
+        if ($user['bloqueado_hasta'] === null) {
+            return $user;
+        }
+
+        $blockedUntil = new DateTimeImmutable(
+            (string) $user['bloqueado_hasta']
+        );
+
+        if (
+            $blockedUntil
+            > new DateTimeImmutable()
+        ) {
+            return $user;
+        }
+
+        $this->users->clearExpiredBlock(
+            (int) $user['id']
+        );
+
+        return $this->users->findById(
+            (int) $user['id']
+        ) ?? $user;
+    }
+
+    private function isBlocked(
+        array $user
+    ): bool {
+        if ($user['bloqueado_hasta'] === null) {
+            return false;
+        }
+
+        return new DateTimeImmutable(
+            (string) $user['bloqueado_hasta']
+        ) > new DateTimeImmutable();
+    }
+
+    private function recordFailure(
+        ?int $userId,
+        string $reason,
+        ?string $identifier,
+        ?string $ipAddress,
+        ?string $userAgent
+    ): void {
+        $this->audit->recordAuthentication(
+            userId: $userId,
+            action: 'INICIO_SESION_FALLIDO',
+            result: 'FALLIDO',
+            reason: $reason,
+            identifier: $identifier,
+            ipAddress: $ipAddress,
+            userAgent: $userAgent
+        );
+    }
+
+    private function clearSensitiveString(
+        string &$value
+    ): void {
+        if (
+            $value !== ''
+            && function_exists('sodium_memzero')
+        ) {
+            sodium_memzero($value);
+        }
+
+        $value = '';
+    }
+}
