@@ -975,11 +975,14 @@ final class UserAdministrationService
         ];
     }
 
-    private function requireAdministrator(
+        private function requireAdministrator(
         int $actorUserId
     ): array {
         $actor = $this->repository
-            ->findById($actorUserId);
+            ->findById(
+                $actorUserId,
+                false
+            );
 
         if (
             $actor === null
@@ -993,8 +996,32 @@ final class UserAdministrationService
             );
         }
 
-        return $actor;
+        $actorWithPassword =
+            $this->repository->findById(
+                $actorUserId,
+                true
+            );
+
+        if (
+            $actorWithPassword === null
+            || !isset(
+                $actorWithPassword[
+                    'password_hash'
+                ]
+            )
+            || $actorWithPassword[
+                'password_hash'
+            ] === ''
+        ) {
+            throw new RuntimeException(
+                'No fue posible validar '
+                . 'la credencial administrativa.'
+            );
+        }
+
+        return $actorWithPassword;
     }
+
 
     private function verifyActorPassword(
         array $actor,
