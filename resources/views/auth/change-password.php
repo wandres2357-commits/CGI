@@ -7,14 +7,14 @@ use App\Security\Csrf;
 
 ?>
 <section class="auth-card">
-    <h1>Cambiar contraseña</h1>
+    <h1>Cambiar contrase&ntilde;a</h1>
 
     <p>
-        Debe cambiar la contraseña temporal antes de
+        Debe cambiar la contrase&ntilde;a temporal antes de
         acceder al panel.
     </p>
 
-    /cambiar-password
+    <form method="post" action="/cambiar-password">
         <input
             type="hidden"
             name="_token"
@@ -25,7 +25,7 @@ use App\Security\Csrf;
 
         <div class="field">
             <label for="current_password">
-                Contraseña actual
+                Contrase&ntilde;a actual
             </label>
 
             <input
@@ -40,7 +40,7 @@ use App\Security\Csrf;
 
         <div class="field">
             <label for="new_password">
-                Nueva contraseña
+                Nueva contrase&ntilde;a
             </label>
 
             <input
@@ -56,7 +56,7 @@ use App\Security\Csrf;
 
         <div class="field">
             <label for="password_confirmation">
-                Confirmar nueva contraseña
+                Confirmar nueva contrase&ntilde;a
             </label>
 
             <input
@@ -74,12 +74,12 @@ use App\Security\Csrf;
             class="primary-button"
             type="submit"
         >
-            Cambiar contraseña
+            Cambiar contrase&ntilde;a
         </button>
     </form>
 
     <p class="muted">
-        El procesamiento seguro del cambio de contraseña
-        se habilitará en la siguiente fase.
+        El procesamiento seguro del cambio de contrase&ntilde;a
+        se habilitara en la siguiente fase.
     </p>
 </section>

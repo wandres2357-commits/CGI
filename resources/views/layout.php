@@ -18,27 +18,31 @@ $flashMessages = SessionManager::consumeFlash();
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1"
     >
-
     <meta
         name="referrer"
         content="same-origin"
     >
-
     <title><?= View::escape($pageTitle) ?></title>
-
-    /assets/css/app.css
+    <link
+        rel="stylesheet"
+        href="/assets/css/app.css"
+    >
 </head>
 <body>
     <header class="site-header">
         <div class="container header-content">
             <a
                 class="brand"
-                href=                : '/login' ?>            >
+                href="<?=
+                    $user !== null
+                        ? '/panel'
+                        : '/login'
+                ?>"
+            >
                 Inventario TI
             </a>
 
@@ -50,7 +54,7 @@ $flashMessages = SessionManager::consumeFlash();
                         ) ?>
                     </span>
 
-                    /logout
+                    <form method="post" action="/logout">
                         <input
                             type="hidden"
                             name="_token"
@@ -63,7 +67,7 @@ $flashMessages = SessionManager::consumeFlash();
                             class="link-button"
                             type="submit"
                         >
-                            Cerrar sesión
+                            Cerrar sesion
                         </button>
                     </form>
                 </nav>

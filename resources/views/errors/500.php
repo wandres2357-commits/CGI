@@ -11,7 +11,7 @@ declare(strict_types=1);
     </p>
 
     <p>
-        /
+        <a href="/">
             Volver al inicio
         </a>
     </p>

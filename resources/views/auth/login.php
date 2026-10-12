@@ -11,13 +11,13 @@ $identifier = isset($identifier)
 
 ?>
 <section class="auth-card">
-    <h1>Iniciar sesión</h1>
+    <h1>Iniciar sesion</h1>
 
     <p class="muted">
         Ingrese con su usuario o correo institucional.
     </p>
 
-    /login
+    <form method="post" action="/login">
         <input
             type="hidden"
             name="_token"
@@ -35,7 +35,9 @@ $identifier = isset($identifier)
                 id="identifier"
                 name="identifier"
                 type="text"
-                value="<?= View::escape($identifier) ?>"
+                value="<?= View::escape(
+                    $identifier
+                ) ?>"
                 maxlength="254"
                 autocomplete="username"
                 required
@@ -45,7 +47,7 @@ $identifier = isset($identifier)
 
         <div class="field">
             <label for="password">
-                Contraseña
+                Contrase&ntilde;a
             </label>
 
             <input
