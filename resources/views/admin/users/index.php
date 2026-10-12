@@ -5,37 +5,48 @@ declare(strict_types=1);
 use App\Auth\SessionManager;
 use App\Http\View;
 
-$items = $result['items'] ?? [];
-$pagination =
-    $result['pagination'] ?? [];
-$filters = $result['filters'] ?? [];
+$items = is_array($result['items'] ?? null)
+    ? $result['items']
+    : [];
 
-$currentUserId =
-    SessionManager::userId();
+$pagination = is_array(
+    $result['pagination'] ?? null
+)
+    ? $result['pagination']
+    : [];
 
-function userAdminQuery(
-    array $overrides = []
+$filters = is_array(
+    $result['filters'] ?? null
+)
+    ? $result['filters']
+    : [];
+
+$currentUserId = SessionManager::userId();
+
+$buildPageUrl = static function (
+    int $page
+) use (
+    $filters,
+    $pagination
 ): string {
-    $values = [
-        'q' => $_GET['q'] ?? '',
-        'rol' => $_GET['rol'] ?? '',
-        'estado' =>
-            $_GET['estado'] ?? '',
-        'por_pagina' =>
-            $_GET['por_pagina'] ?? 20,
-        'pagina' =>
-            $_GET['pagina'] ?? 1,
+    $parameters = [
+        'q' => (string) (
+            $filters['q'] ?? ''
+        ),
+        'rol' => (string) (
+            $filters['role'] ?? ''
+        ),
+        'estado' => (string) (
+            $filters['state'] ?? ''
+        ),
+        'por_pagina' => (int) (
+            $pagination['per_page'] ?? 20
+        ),
+        'pagina' => max(1, $page),
     ];
 
-    foreach (
-        $overrides
-        as $key => $value
-    ) {
-        $values[$key] = $value;
-    }
-
-    $values = array_filter(
-        $values,
+    $parameters = array_filter(
+        $parameters,
         static fn (
             mixed $value
         ): bool => (
@@ -44,26 +55,34 @@ function userAdminQuery(
         )
     );
 
-    return http_build_query($values);
-}
+    return '/administracion/usuarios?'
+        . http_build_query($parameters);
+};
 
 ?>
 <section>
     <div class="page-heading">
         <div>
-            <h1>Administración de usuarios</h1>
+            <h1>Administracion de usuarios</h1>
 
             <p class="muted">
                 Gestione cuentas, roles y estados.
             </p>
         </div>
 
-        /administracion/usuarios/crear
+        <a
+            class="button-link"
+            href="/administracion/usuarios/crear"
+        >
             Crear usuario
         </a>
     </div>
 
-    /administracion/usuarios
+    <form
+        class="filter-panel"
+        method="get"
+        action="/administracion/usuarios"
+    >
         <div class="field">
             <label for="q">Buscar</label>
 
@@ -83,9 +102,7 @@ function userAdminQuery(
             <label for="rol">Rol</label>
 
             <select id="rol" name="rol">
-                <option value="">
-                    Todos
-                </option>
+                <option value="">Todos</option>
 
                 <?php foreach ($roles as $role): ?>
                     <option
@@ -110,13 +127,8 @@ function userAdminQuery(
         <div class="field">
             <label for="estado">Estado</label>
 
-            <select
-                id="estado"
-                name="estado"
-            >
-                <option value="">
-                    Todos
-                </option>
+            <select id="estado" name="estado">
+                <option value="">Todos</option>
 
                 <option
                     value="activo"
@@ -158,7 +170,7 @@ function userAdminQuery(
 
         <div class="field">
             <label for="por_pagina">
-                Por página
+                Por pagina
             </label>
 
             <select
@@ -173,9 +185,8 @@ function userAdminQuery(
                         value="<?= $pageSize ?>"
                         <?=
                             (int) (
-                                $pagination[
-                                    'per_page'
-                                ] ?? 20
+                                $pagination['per_page']
+                                ?? 20
                             ) === $pageSize
                                 ? 'selected'
                                 : ''
@@ -195,7 +206,10 @@ function userAdminQuery(
                 Aplicar filtros
             </button>
 
-            /administracion/usuarios
+            <a
+                class="secondary-button"
+                href="/administracion/usuarios"
+            >
                 Limpiar
             </a>
         </div>
@@ -204,18 +218,15 @@ function userAdminQuery(
     <p class="result-summary">
         Mostrando
         <?= (int) (
-            $pagination['first_item']
-            ?? 0
+            $pagination['first_item'] ?? 0
         ) ?>
         a
         <?= (int) (
-            $pagination['last_item']
-            ?? 0
+            $pagination['last_item'] ?? 0
         ) ?>
         de
         <?= (int) (
-            $pagination['total']
-            ?? 0
+            $pagination['total'] ?? 0
         ) ?>
         usuarios.
     </p>
@@ -234,30 +245,23 @@ function userAdminQuery(
                         <th>Correo</th>
                         <th>Rol</th>
                         <th>Estado</th>
-                        <th>Último acceso</th>
+                        <th>Ultimo acceso</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    <?php foreach (
-                        $items
-                        as $user
-                    ): ?>
+                    <?php foreach ($items as $user): ?>
                         <tr>
                             <td>
                                 <?= View::escape(
-                                    $user[
-                                        'nombre_completo'
-                                    ]
+                                    $user['nombre_completo']
                                 ) ?>
                             </td>
 
                             <td>
                                 <?= View::escape(
-                                    $user[
-                                        'nombre_usuario'
-                                    ]
+                                    $user['nombre_usuario']
                                 ) ?>
 
                                 <?php if (
@@ -278,9 +282,7 @@ function userAdminQuery(
 
                             <td>
                                 <?= View::escape(
-                                    $user[
-                                        'rol_nombre'
-                                    ]
+                                    $user['rol_nombre']
                                 ) ?>
                             </td>
 
@@ -294,9 +296,7 @@ function userAdminQuery(
                                         Inactivo
                                     </span>
                                 <?php elseif (
-                                    $user[
-                                        'esta_bloqueado'
-                                    ]
+                                    $user['esta_bloqueado']
                                 ): ?>
                                     <span
                                         class="status status-blocked"
@@ -314,16 +314,14 @@ function userAdminQuery(
 
                             <td>
                                 <?= View::escape(
-                                    $user[
-                                        'ultimo_acceso_en'
-                                    ] ?? 'Nunca'
+                                    $user['ultimo_acceso_en']
+                                    ?? 'Nunca'
                                 ) ?>
                             </td>
 
-                            <td>
+                            T]]td>
                                 <span class="muted">
-                                    Edición disponible
-                                    en la fase 6.3B
+                                    Disponible en 6.3B
                                 </span>
                             </td>
                         </tr>
@@ -334,23 +332,59 @@ function userAdminQuery(
 
         <?php if (
             (int) (
-                $pagination['total_pages']
-                ?? 1
+                $pagination['total_pages'] ?? 1
             ) > 1
         ): ?>
             <nav
                 class="pagination"
-                aria-label="Paginación"
+                aria-label="Paginacion"
             >
                 <?php if (
-                    $pagination[
-                        'has_previous'
-                    ]
+                    $pagination['has_previous']
                 ): ?>
-                                                        $pagination[
-                                        'previous_page'
-                                    ],
-                            ])
+                    <a
+                        class="secondary-button"
+                        href="<?= View::escape(
+                            $buildPageUrl(
+                                (int) $pagination[
+                                    'previous_page'
+                                ]
+                            )
                         ) ?>"
                     >
                         Anterior
+                    </a>
+                <?php endif; ?>
+
+                <span>
+                    Pagina
+                    <?= (int) (
+                        $pagination['page'] ?? 1
+                    ) ?>
+                    de
+                    <?= (int) (
+                        $pagination['total_pages']
+                        ?? 1
+                    ) ?>
+                </span>
+
+                <?php if (
+                    $pagination['has_next']
+                ): ?>
+                    <a
+                        class="secondary-button"
+                        href="<?= View::escape(
+                            $buildPageUrl(
+                                (int) $pagination[
+                                    'next_page'
+                                ]
+                            )
+                        ) ?>"
+                    >
+                        Siguiente
+                    </a>
+                <?php endif; ?>
+            </nav>
+        <?php endif; ?>
+    <?php endif; ?>
+</section>

@@ -55,15 +55,18 @@ $user = SessionManager::user();
         )
     ): ?>
         <p>
-            /administracion/usuarios
-                Administración de usuarios
+            <a
+                class="button-link"
+                href="/administracion/usuarios"
+            >
+                Administracion de usuarios
             </a>
         </p>
     <?php endif; ?>
 
     <p class="muted">
-        Los módulos de activos, solicitudes,
-        entregas e informes se incorporarán en
-        las siguientes fases.
+        Los modulos de activos, solicitudes,
+        entregas e informes se incorporaran
+        en las siguientes fases.
     </p>
 </section>
