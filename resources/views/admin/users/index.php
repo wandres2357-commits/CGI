@@ -311,22 +311,21 @@ $buildPageUrl = static function (
                                     </span>
                                 <?php endif; ?>
                             </td>
-
-                            <td>
-                                <?= View::escape(
-                                    $user['ultimo_acceso_en']
-                                    ?? 'Nunca'
-                                ) ?>
+                             <td>
+                                 <?= View::escape(
+                                     $user['ultimo_acceso_en']
+                                     ?? 'Nunca'
+                                  ) ?>
                             </td>
 
-                            T]]td>
+                            <td>
                                 <span class="muted">
                                     Disponible en 6.3B
                                 </span>
                             </td>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
+                    <?php endforeach; ?>                
+               </tbody>
             </table>
         </div>
 
