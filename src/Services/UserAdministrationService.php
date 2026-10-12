@@ -422,8 +422,7 @@ final class UserAdministrationService
                     === self::ROLE_TECHNICIAN
                 && $roleCode
                     === self::ROLE_ADMINISTRATOR;
-
-                        if (
+            if (
                 $isPromotion
                 && !$this->verifyActorPassword(
                     $actor,
@@ -664,7 +663,7 @@ final class UserAdministrationService
                 && $target['rol_codigo']
                     === self::ROLE_ADMINISTRATOR;
 
-                        if (
+            if (
                 $isAdministratorDeactivation
                 && !$this->verifyActorPassword(
                     $actor,
