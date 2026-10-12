@@ -14,6 +14,7 @@ use App\Repositories\SessionRepository;
 use App\Repositories\UserRepository;
 use App\Security\Csrf;
 use App\Services\AuditService;
+use App\Auth\PasswordService;
 
 require dirname(__DIR__)
     . DIRECTORY_SEPARATOR
@@ -54,6 +55,13 @@ $sessions = new SessionRepository($pdo);
 $audit = new AuditService($pdo);
 
 $auth = new AuthService(
+    pdo: $pdo,
+    users: $users,
+    sessions: $sessions,
+    audit: $audit
+);
+
+$passwordService = new PasswordService(
     pdo: $pdo,
     users: $users,
     sessions: $sessions,
@@ -205,18 +213,18 @@ try {
         exit;
     }
 
-    if (
+        if (
         $method === 'POST'
         && $path === '/cambiar-password'
     ) {
         Authorization::requireAuthenticated();
 
-        $csrfIsValid = Csrf::validate(
-            'change_password',
-            Request::postRawString('_token')
-        );
-
-        if (!$csrfIsValid) {
+        if (
+            !Csrf::validate(
+                'change_password',
+                Request::postRawString('_token')
+            )
+        ) {
             SessionManager::flash(
                 'error',
                 'La solicitud no es válida.'
@@ -227,15 +235,61 @@ try {
             );
         }
 
+        $userId = SessionManager::userId();
+
+        if ($userId === null) {
+            SessionManager::destroy();
+
+            Response::redirect('/login');
+        }
+
+        $result = $passwordService
+            ->changeOwnPassword(
+                userId: $userId,
+                currentPassword:
+                    Request::postRawString(
+                        'current_password'
+                    ),
+                newPassword:
+                    Request::postRawString(
+                        'new_password'
+                    ),
+                confirmation:
+                    Request::postRawString(
+                        'password_confirmation'
+                    ),
+                ipAddress:
+                    Request::ipAddress(),
+                userAgent:
+                    Request::userAgent()
+            );
+
+        Csrf::clearAll();
+
+        if (!$result->successful) {
+            SessionManager::flash(
+                'error',
+                $result->message
+            );
+
+            foreach ($result->errors as $error) {
+                SessionManager::flash(
+                    'error',
+                    (string) $error
+                );
+            }
+
+            Response::redirect(
+                '/cambiar-password'
+            );
+        }
+
         SessionManager::flash(
-            'warning',
-            'El procesamiento del cambio de contraseña '
-            . 'se habilitará en el siguiente paso.'
+            'success',
+            $result->message
         );
 
-        Response::redirect(
-            '/cambiar-password'
-        );
+        Response::redirect('/panel');
     }
 
     if ($method === 'GET' && $path === '/panel') {
