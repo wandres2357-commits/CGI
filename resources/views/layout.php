@@ -18,25 +18,27 @@ $flashMessages = SessionManager::consumeFlash();
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1"
     >
+
     <meta
         name="referrer"
         content="same-origin"
     >
-    <title>
-        <?= View::escape($pageTitle) ?>
-    </title>
+
+    <title><?= View::escape($pageTitle) ?></title>
+
     /assets/css/app.css
 </head>
 <body>
     <header class="site-header">
         <div class="container header-content">
-            <?= $user !== null
-                    ? '/panel'
-                    : '/login' ?>            >
+            <a
+                class="brand"
+                href=                : '/login' ?>            >
                 Inventario TI
             </a>
 
@@ -70,10 +72,7 @@ $flashMessages = SessionManager::consumeFlash();
     </header>
 
     <main class="container main-content">
-        <?php foreach (
-            $flashMessages
-            as $message
-        ): ?>
+        <?php foreach ($flashMessages as $message): ?>
             <div
                 class="alert alert-<?=
                     View::escape(

@@ -35,9 +35,7 @@ $identifier = isset($identifier)
                 id="identifier"
                 name="identifier"
                 type="text"
-                value="<?= View::escape(
-                    $identifier
-                ) ?>"
+                value="<?= View::escape($identifier) ?>"
                 maxlength="254"
                 autocomplete="username"
                 required

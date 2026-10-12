@@ -19,9 +19,7 @@ use App\Security\Csrf;
             type="hidden"
             name="_token"
             value="<?= View::escape(
-                Csrf::generate(
-                    'change_password'
-                )
+                Csrf::generate('change_password')
             ) ?>"
         >
 
@@ -81,8 +79,7 @@ use App\Security\Csrf;
     </form>
 
     <p class="muted">
-        En esta fase el formulario está preparado.
-        El procesamiento seguro se habilitará en el
-        siguiente paso.
+        El procesamiento seguro del cambio de contraseña
+        se habilitará en la siguiente fase.
     </p>
 </section>
