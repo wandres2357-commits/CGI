@@ -292,6 +292,50 @@ final class SessionRepository
         return (int) $statement->fetchColumn() === 1;
     }
 
+    public function replaceSessionId(
+        string $oldSessionId,
+        string $newSessionId,
+        int $userId
+    ): void {
+        if (
+            $oldSessionId === ''
+            || $newSessionId === ''
+            || $userId <= 0
+        ) {
+            throw new RuntimeException(
+                'No fue posible validar la rotación de sesión.'
+            );
+        }
+
+        if (hash_equals($oldSessionId, $newSessionId)) {
+            return;
+        }
+
+        $statement = $this->pdo->prepare(
+            'UPDATE sesiones_usuario
+             SET id = :nuevo_id,
+                 ultima_actividad_en =
+                    CURRENT_TIMESTAMP
+             WHERE id = :id_anterior
+               AND usuario_id = :usuario_id
+               AND cerrada_en IS NULL
+               AND expira_en > CURRENT_TIMESTAMP'
+        );
+
+        $statement->execute([
+            'nuevo_id' => $newSessionId,
+            'id_anterior' => $oldSessionId,
+            'usuario_id' => $userId,
+        ]);
+
+        if ($statement->rowCount() !== 1) {
+            throw new RuntimeException(
+                'No fue posible actualizar '
+                . 'el identificador de sesión.'
+            );
+        }
+    }
+
     private function limit(
         ?string $value,
         int $maximumLength

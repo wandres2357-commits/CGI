@@ -78,8 +78,14 @@ use App\Security\Csrf;
         </button>
     </form>
 
-    <p class="muted">
-        El procesamiento seguro del cambio de contrase&ntilde;a
-        se habilitara en la siguiente fase.
-    </p>
+            <div class="password-rules">
+            <p>La nueva contraseña debe incluir:</p>
+            <ul>
+                <li>Al menos 12 caracteres.</li>
+                <li>Una letra mayúscula.</li>
+                <li>Una letra minúscula.</li>
+                <li>Un número.</li>
+                <li>Un carácter especial.</li>
+            </ul>
+        </div>
 </section>

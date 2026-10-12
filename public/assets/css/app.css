@@ -182,3 +182,21 @@ input:focus {
         padding: 1.25rem;
     }
 }
+
+.password-rules {
+    margin-block: 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: 0.4rem;
+    color: #3f4b5c;
+    background: #eef4fb;
+}
+
+.password-rules p {
+    margin-top: 0;
+    font-weight: 650;
+}
+
+.password-rules ul {
+    margin-bottom: 0;
+    padding-left: 1.25rem;
+}
