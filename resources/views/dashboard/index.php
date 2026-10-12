@@ -49,6 +49,18 @@ $user = SessionManager::user();
         </div>
     </dl>
 
+    <?php if (
+        SessionManager::hasRole(
+            'ADMINISTRADOR'
+        )
+    ): ?>
+        <p>
+            /administracion/usuarios
+                Administración de usuarios
+            </a>
+        </p>
+    <?php endif; ?>
+
     <p class="muted">
         Los módulos de activos, solicitudes,
         entregas e informes se incorporarán en

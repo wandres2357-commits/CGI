@@ -104,6 +104,41 @@ final class Request
         return self::method() === 'POST';
     }
 
+    public static function queryString(
+        string $key,
+        string $default = ''
+    ): string {
+        $value = $_GET[$key] ?? $default;
+
+        if (!is_string($value)) {
+            return $default;
+        }
+
+        return trim($value);
+    }
+
+    public static function queryInt(
+        string $key,
+        int $default = 0
+    ): int {
+        $value = $_GET[$key] ?? null;
+
+        if (
+            is_int($value)
+            || (
+                is_string($value)
+                && preg_match(
+                    '/^-?[0-9]+$/',
+                    $value
+                ) === 1
+            )
+        ) {
+            return (int) $value;
+        }
+
+        return $default;
+    }
+
     private function __construct()
     {
     }

@@ -15,6 +15,10 @@ use App\Repositories\UserRepository;
 use App\Security\Csrf;
 use App\Services\AuditService;
 use App\Auth\PasswordService;
+use App\Http\Controllers\UserAdministrationController;
+use App\Repositories\UserAdministrationRepository;
+use App\Security\TemporaryPasswordGenerator;
+use App\Services\UserAdministrationService;
 
 require dirname(__DIR__)
     . DIRECTORY_SEPARATOR
@@ -68,6 +72,26 @@ $passwordService = new PasswordService(
     audit: $audit
 );
 
+$userAdministrationRepository =
+    new UserAdministrationRepository(
+        $pdo
+    );
+
+$userAdministrationService =
+    new UserAdministrationService(
+        pdo: $pdo,
+        repository:
+            $userAdministrationRepository,
+        audit: $audit,
+        passwordGenerator:
+            new TemporaryPasswordGenerator()
+    );
+
+$userAdministrationController =
+    new UserAdministrationController(
+        $userAdministrationService
+    );
+
 SessionManager::start();
 
 try {
@@ -105,7 +129,18 @@ $method = Request::method();
 $path = Request::path();
 
 try {
+    if (
+        $userAdministrationController
+            ->handle(
+                $method,
+                $path
+            )
+    ) {
+        exit;
+    }
+
     if ($method === 'GET' && $path === '/') {
+
         if (!SessionManager::isAuthenticated()) {
             Response::redirect('/login');
         }
