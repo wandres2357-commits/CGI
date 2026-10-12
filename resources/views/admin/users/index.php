@@ -324,7 +324,7 @@ $buildPageUrl = static function (
                                 </span>
                             </td>
                         </tr>
-                    <?php endforeach; ?>                
+                    <?php endforeach; ?>
                </tbody>
             </table>
         </div>
