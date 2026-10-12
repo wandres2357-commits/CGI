@@ -23,10 +23,7 @@ require dirname(__DIR__)
 function readTestInput(
     string $message
 ): string {
-    fwrite(
-        STDOUT,
-        $message
-    );
+    fwrite(STDOUT, $message);
 
     $value = fgets(STDIN);
 
@@ -42,10 +39,7 @@ function readTestInput(
 function readTestPassword(
     string $message
 ): string {
-    fwrite(
-        STDOUT,
-        $message
-    );
+    fwrite(STDOUT, $message);
 
     $terminalState = trim(
         (string) shell_exec('stty -g')
@@ -63,10 +57,7 @@ function readTestPassword(
     try {
         $password = fgets(STDIN);
 
-        fwrite(
-            STDOUT,
-            PHP_EOL
-        );
+        fwrite(STDOUT, PHP_EOL);
 
         if ($password === false) {
             throw new RuntimeException(
@@ -81,26 +72,16 @@ function readTestPassword(
     } finally {
         shell_exec(
             'stty '
-            . escapeshellarg(
-                $terminalState
-            )
+            . escapeshellarg($terminalState)
         );
     }
 }
 
 $pdo = Connection::get();
 
-$users = new UserRepository(
-    $pdo
-);
-
-$sessions = new SessionRepository(
-    $pdo
-);
-
-$audit = new AuditService(
-    $pdo
-);
+$users = new UserRepository($pdo);
+$sessions = new SessionRepository($pdo);
+$audit = new AuditService($pdo);
 
 $auth = new AuthService(
     pdo: $pdo,
@@ -125,7 +106,10 @@ try {
         userAgent: 'CLI test-auth-service.php'
     );
 
-    if (function_exists('sodium_memzero')) {
+    if (
+        $password !== ''
+        && function_exists('sodium_memzero')
+    ) {
         sodium_memzero($password);
     }
 
@@ -144,13 +128,9 @@ try {
     $sessionUser = SessionManager::user();
 
     if ($sessionUser === null) {
-        fwrite(
-            STDERR,
-            'ERROR: no se creó la sesión autenticada.'
-            . PHP_EOL
+        throw new RuntimeException(
+            'No se creó la sesión autenticada.'
         );
-
-        exit(1);
     }
 
     echo 'Autenticación correcta.'
@@ -172,28 +152,35 @@ try {
         )
         . PHP_EOL;
 
+    $sessionIsActive = $sessions->isActive(
+        SessionManager::id(),
+        (int) $sessionUser['id']
+    );
+
     echo 'Sesión registrada: '
-        . (
-            $sessions->isActive(
-                SessionManager::id(),
-                (int) $sessionUser['id']
-            )
-                ? 'sí'
-                : 'no'
-        )
+        . ($sessionIsActive ? 'sí' : 'no')
         . PHP_EOL;
+
+    if (!$sessionIsActive) {
+        throw new RuntimeException(
+            'La sesión no quedó activa en la base.'
+        );
+    }
 
     $auth->logout(
         reason: 'FIN_PRUEBA_AUTENTICACION',
         ipAddress: '127.0.0.1',
-        userAgent:
-            'CLI test-auth-service.php'
+        userAgent: 'CLI test-auth-service.php'
     );
 
     echo 'Cierre de sesión: correcto.'
         . PHP_EOL;
 } catch (\Throwable $exception) {
-    if (function_exists('sodium_memzero')) {
+    if (
+        isset($password)
+        && $password !== ''
+        && function_exists('sodium_memzero')
+    ) {
         sodium_memzero($password);
     }
 

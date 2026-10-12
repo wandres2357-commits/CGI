@@ -38,16 +38,11 @@ final class AuthResult
 
     public function requiresPasswordChange(): bool
     {
-        if (
-            !$this->successful
-            || $this->user === null
-        ) {
-            return false;
-        }
-
-        return (bool) (
-            $this->user['debe_cambiar_password']
-            ?? false
-        );
+        return $this->successful
+            && $this->user !== null
+            && (bool) (
+                $this->user['debe_cambiar_password']
+                ?? false
+            );
     }
 }

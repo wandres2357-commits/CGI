@@ -29,7 +29,7 @@ final class SessionRepository
 
         if ($userId <= 0) {
             throw new RuntimeException(
-                'El usuario de la sesión no es válido.'
+                'El identificador de usuario no es válido.'
             );
         }
 
@@ -60,10 +60,14 @@ final class SessionRepository
         $statement->execute([
             'id' => $sessionId,
             'usuario_id' => $userId,
-            'direccion_ip' =>
-                $this->limit($ipAddress, 45),
-            'agente_usuario' =>
-                $this->limit($userAgent, 500),
+            'direccion_ip' => $this->limit(
+                $ipAddress,
+                45
+            ),
+            'agente_usuario' => $this->limit(
+                $userAgent,
+                500
+            ),
             'expira_en' => $expiresAt,
         ]);
     }
@@ -121,7 +125,7 @@ final class SessionRepository
             'UPDATE sesiones_usuario
              SET cerrada_en = CURRENT_TIMESTAMP,
                  motivo_cierre =
-                 \'EXPIRADA_AUTOMATICAMENTE\'
+                     \'EXPIRADA_AUTOMATICAMENTE\'
              WHERE usuario_id = :usuario_id
                AND cerrada_en IS NULL
                AND expira_en <= CURRENT_TIMESTAMP'
@@ -160,9 +164,7 @@ final class SessionRepository
             $maximumSessions
         );
 
-        $this->closeExpiredForUser(
-            $userId
-        );
+        $this->closeExpiredForUser($userId);
 
         $activeCount = $this->countActiveForUser(
             $userId
@@ -177,7 +179,7 @@ final class SessionRepository
             return [];
         }
 
-        $statement = $this->pdo->prepare(
+        $sql =
             'SELECT id
              FROM sesiones_usuario
              WHERE usuario_id = :usuario_id
@@ -186,8 +188,9 @@ final class SessionRepository
                AND id <> :sesion_actual
              ORDER BY iniciada_en ASC, id ASC
              LIMIT '
-            . (int) $sessionsToClose
-        );
+            . (int) $sessionsToClose;
+
+        $statement = $this->pdo->prepare($sql);
 
         $statement->execute([
             'usuario_id' => $userId,
@@ -241,10 +244,37 @@ final class SessionRepository
         return $statement->rowCount();
     }
 
+    public function closeAllForUser(
+        int $userId,
+        string $reason
+    ): int {
+        $statement = $this->pdo->prepare(
+            'UPDATE sesiones_usuario
+             SET cerrada_en = CURRENT_TIMESTAMP,
+                 motivo_cierre = :motivo
+             WHERE usuario_id = :usuario_id
+               AND cerrada_en IS NULL'
+        );
+
+        $statement->execute([
+            'motivo' => $this->limitRequired(
+                $reason,
+                100
+            ),
+            'usuario_id' => $userId,
+        ]);
+
+        return $statement->rowCount();
+    }
+
     public function isActive(
         string $sessionId,
         int $userId
     ): bool {
+        if ($sessionId === '' || $userId <= 0) {
+            return false;
+        }
+
         $statement = $this->pdo->prepare(
             'SELECT COUNT(*)
              FROM sesiones_usuario

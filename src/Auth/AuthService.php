@@ -14,6 +14,13 @@ use RuntimeException;
 
 final class AuthService
 {
+    private const GENERIC_FAILURE =
+        'No fue posible iniciar sesión.';
+
+    private const DUMMY_PASSWORD_HASH =
+        '$2y$12$abcdefghijklmnopqrstuu'
+        . '7QyVjfnqY9rZkBvUwPsPV7bRwg9yK';
+
     public function __construct(
         private readonly PDO $pdo,
         private readonly UserRepository $users,
@@ -32,14 +39,9 @@ final class AuthService
             trim($identifier)
         );
 
-        if (
-            $identifier === ''
-            || $password === ''
-        ) {
-            $this->audit->recordAuthentication(
+        if ($identifier === '' || $password === '') {
+            $this->recordFailure(
                 userId: null,
-                action: 'INICIO_SESION_FALLIDO',
-                result: 'FALLIDO',
                 reason: 'CREDENCIALES_INCOMPLETAS',
                 identifier: $identifier !== ''
                     ? $identifier
@@ -47,6 +49,8 @@ final class AuthService
                 ipAddress: $ipAddress,
                 userAgent: $userAgent
             );
+
+            $this->clearSensitiveString($password);
 
             return AuthResult::failure();
         }
@@ -57,50 +61,58 @@ final class AuthService
         if ($user === null) {
             password_verify(
                 $password,
-                $this->dummyPasswordHash()
+                self::DUMMY_PASSWORD_HASH
             );
 
-            $this->audit->recordAuthentication(
+            $this->recordFailure(
                 userId: null,
-                action: 'INICIO_SESION_FALLIDO',
-                result: 'FALLIDO',
                 reason: 'CREDENCIALES_INVALIDAS',
                 identifier: $identifier,
                 ipAddress: $ipAddress,
                 userAgent: $userAgent
             );
 
+            $this->clearSensitiveString($password);
+
             return AuthResult::failure();
         }
 
         if (!$user['activo']) {
-            $this->audit->recordAuthentication(
-                userId: $user['id'],
-                action: 'INICIO_SESION_FALLIDO',
-                result: 'FALLIDO',
+            password_verify(
+                $password,
+                (string) $user['password_hash']
+            );
+
+            $this->recordFailure(
+                userId: (int) $user['id'],
                 reason: 'CUENTA_INACTIVA',
                 identifier: $identifier,
                 ipAddress: $ipAddress,
                 userAgent: $userAgent
             );
 
+            $this->clearSensitiveString($password);
+
             return AuthResult::failure();
         }
 
-        $user = $this->clearExpiredBlock(
-            $user
-        );
+        $user = $this->clearExpiredBlock($user);
 
         if ($this->isBlocked($user)) {
-            $this->audit->recordAuthentication(
-                userId: $user['id'],
-                action: 'INICIO_SESION_FALLIDO',
-                result: 'FALLIDO',
+            password_verify(
+                $password,
+                (string) $user['password_hash']
+            );
+
+            $this->recordFailure(
+                userId: (int) $user['id'],
                 reason: 'CUENTA_BLOQUEADA',
                 identifier: $identifier,
                 ipAddress: $ipAddress,
                 userAgent: $userAgent
             );
+
+            $this->clearSensitiveString($password);
 
             return AuthResult::failure(
                 'ACCOUNT_BLOCKED'
@@ -110,7 +122,7 @@ final class AuthService
         if (
             !password_verify(
                 $password,
-                $user['password_hash']
+                (string) $user['password_hash']
             )
         ) {
             $this->registerFailedAttempt(
@@ -120,16 +132,22 @@ final class AuthService
                 userAgent: $userAgent
             );
 
+            $this->clearSensitiveString($password);
+
             return AuthResult::failure();
         }
 
-        return $this->completeSuccessfulLogin(
-            user: $user,
-            password: $password,
-            identifier: $identifier,
-            ipAddress: $ipAddress,
-            userAgent: $userAgent
-        );
+        try {
+            return $this->completeSuccessfulLogin(
+                user: $user,
+                password: $password,
+                identifier: $identifier,
+                ipAddress: $ipAddress,
+                userAgent: $userAgent
+            );
+        } finally {
+            $this->clearSensitiveString($password);
+        }
     }
 
     public function logout(
@@ -142,39 +160,73 @@ final class AuthService
         $user = SessionManager::user();
         $sessionId = SessionManager::id();
 
-        if ($user !== null) {
-            $this->pdo->beginTransaction();
+        if ($user === null) {
+            SessionManager::destroy();
 
-            try {
-                $this->sessions->close(
-                    $sessionId,
-                    $reason
-                );
+            return;
+        }
 
-                $this->audit->recordAuthentication(
-                    userId: (int) $user['id'],
-                    action: 'CIERRE_SESION',
-                    result: 'EXITOSO',
-                    reason: $reason,
-                    identifier:
-                        (string) $user['nombre_usuario'],
-                    ipAddress: $ipAddress,
-                    userAgent: $userAgent
-                );
+        $this->pdo->beginTransaction();
 
-                $this->pdo->commit();
-            } catch (\Throwable $exception) {
-                if ($this->pdo->inTransaction()) {
-                    $this->pdo->rollBack();
-                }
+        try {
+            $this->sessions->close(
+                $sessionId,
+                $reason
+            );
 
-                SessionManager::destroy();
+            $this->audit->recordAuthentication(
+                userId: (int) $user['id'],
+                action: 'CIERRE_SESION',
+                result: 'EXITOSO',
+                reason: $reason,
+                identifier:
+                    (string) $user['nombre_usuario'],
+                ipAddress: $ipAddress,
+                userAgent: $userAgent
+            );
 
-                throw $exception;
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
             }
+
+            SessionManager::destroy();
+
+            throw $exception;
         }
 
         SessionManager::destroy();
+    }
+
+    public function sessionIsValid(): bool
+    {
+        if (!SessionManager::isAuthenticated()) {
+            return false;
+        }
+
+        $userId = SessionManager::userId();
+        $sessionId = SessionManager::id();
+
+        if ($userId === null || $sessionId === '') {
+            return false;
+        }
+
+        return $this->sessions->isActive(
+            $sessionId,
+            $userId
+        );
+    }
+
+    public function touchAuthenticatedSession(): void
+    {
+        if (!$this->sessionIsValid()) {
+            return;
+        }
+
+        $this->sessions->touch(
+            SessionManager::id()
+        );
     }
 
     private function registerFailedAttempt(
@@ -205,7 +257,7 @@ final class AuthService
             $attempts =
                 $this->users
                     ->incrementFailedAttempts(
-                        $user['id']
+                        (int) $user['id']
                     );
 
             $reason = 'CREDENCIALES_INVALIDAS';
@@ -221,17 +273,18 @@ final class AuthService
                 )->format('Y-m-d H:i:s');
 
                 $this->users->blockUntil(
-                    $user['id'],
+                    (int) $user['id'],
                     $blockedUntil
                 );
 
                 $reason = 'CUENTA_BLOQUEADA';
 
                 $this->audit->recordAuthentication(
-                    userId: $user['id'],
+                    userId: (int) $user['id'],
                     action: 'BLOQUEO_CUENTA',
                     result: 'EXITOSO',
-                    reason: 'MAXIMO_INTENTOS_FALLIDOS',
+                    reason:
+                        'MAXIMO_INTENTOS_FALLIDOS',
                     identifier: $identifier,
                     ipAddress: $ipAddress,
                     userAgent: $userAgent
@@ -239,7 +292,7 @@ final class AuthService
             }
 
             $this->audit->recordAuthentication(
-                userId: $user['id'],
+                userId: (int) $user['id'],
                 action: 'INICIO_SESION_FALLIDO',
                 result: 'FALLIDO',
                 reason: $reason,
@@ -281,12 +334,16 @@ final class AuthService
             )
         );
 
-        $this->pdo->beginTransaction();
+        SessionManager::authenticate($user);
+
+        $sessionId = SessionManager::id();
 
         try {
+            $this->pdo->beginTransaction();
+
             if (
                 password_needs_rehash(
-                    $user['password_hash'],
+                    (string) $user['password_hash'],
                     PASSWORD_DEFAULT
                 )
             ) {
@@ -303,22 +360,20 @@ final class AuthService
                 }
 
                 $this->users->updatePasswordHash(
-                    userId: $user['id'],
+                    userId: (int) $user['id'],
                     passwordHash: $newHash,
                     requireChange:
-                        $user['debe_cambiar_password']
+                        (bool) $user[
+                            'debe_cambiar_password'
+                        ]
                 );
+
+                $this->clearSensitiveString($newHash);
             }
 
             $this->users->recordSuccessfulLogin(
-                $user['id']
+                (int) $user['id']
             );
-
-            SessionManager::authenticate(
-                $user
-            );
-
-            $sessionId = SessionManager::id();
 
             $expiresAt = (
                 new DateTimeImmutable()
@@ -331,7 +386,7 @@ final class AuthService
 
             $this->sessions->create(
                 sessionId: $sessionId,
-                userId: $user['id'],
+                userId: (int) $user['id'],
                 expiresAt: $expiresAt,
                 ipAddress: $ipAddress,
                 userAgent: $userAgent
@@ -340,116 +395,5 @@ final class AuthService
             $closedSessions =
                 $this->sessions
                     ->closeOldestUntilLimit(
-                        userId: $user['id'],
-                        maximumSessions:
-                            $maximumSessions,
-                        currentSessionId:
-                            $sessionId
-                    );
-
-            $this->audit->recordAuthentication(
-                userId: $user['id'],
-                action: 'INICIO_SESION',
-                result: 'EXITOSO',
-                reason: 'CREDENCIALES_VALIDAS',
-                identifier: $identifier,
-                ipAddress: $ipAddress,
-                userAgent: $userAgent
-            );
-
-            if ($closedSessions !== []) {
-                $this->audit->record(
-                    userId: $user['id'],
-                    module: 'AUTENTICACION',
-                    action:
-                        'CIERRE_SESIONES_ANTIGUAS',
-                    result: 'EXITOSO',
-                    entityType: 'USUARIO',
-                    entityId: $user['id'],
-                    newValues: [
-                        'cantidad' =>
-                            count($closedSessions),
-                    ],
-                    reason:
-                        'LIMITE_SESIONES_SIMULTANEAS',
-                    ipAddress: $ipAddress,
-                    userAgent: $userAgent
-                );
-            }
-
-            $this->pdo->commit();
-
-            $freshUser = $this->users
-                ->findById($user['id']);
-
-            if ($freshUser === null) {
-                throw new RuntimeException(
-                    'No fue posible recuperar '
-                    . 'el usuario autenticado.'
-                );
-            }
-
-            if (function_exists('sodium_memzero')) {
-                sodium_memzero($password);
-            }
-
-            return AuthResult::success(
-                $freshUser
-            );
-        } catch (\Throwable $exception) {
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
-            }
-
-            SessionManager::destroy();
-
-            throw $exception;
-        }
-    }
-
-    private function clearExpiredBlock(
-        array $user
-    ): array {
-        if ($user['bloqueado_hasta'] === null) {
-            return $user;
-        }
-
-        $blockedUntil = new DateTimeImmutable(
-            $user['bloqueado_hasta']
-        );
-
-        if (
-            $blockedUntil
-            > new DateTimeImmutable()
-        ) {
-            return $user;
-        }
-
-        $this->users->clearExpiredBlock(
-            $user['id']
-        );
-
-        $freshUser = $this->users
-            ->findById($user['id']);
-
-        return $freshUser ?? $user;
-    }
-
-    private function isBlocked(
-        array $user
-    ): bool {
-        if ($user['bloqueado_hasta'] === null) {
-            return false;
-        }
-
-        return new DateTimeImmutable(
-            $user['bloqueado_hasta']
-        ) > new DateTimeImmutable();
-    }
-
-    private function dummyPasswordHash(): string
-    {
-        return '$2y$12$abcdefghijklmnopqrstuu'
-            . '7QyVjfnqY9rZkBvUwPsPV7bRwg9yK';
-    }
-}
+                        userId: (int) $user['id'],
+                       
