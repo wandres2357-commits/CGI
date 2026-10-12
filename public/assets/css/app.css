@@ -1,0 +1,184 @@
+:root {
+    color-scheme: light;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    line-height: 1.5;
+    color: #172033;
+    background: #f3f6fa;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+}
+
+a {
+    color: #0759b5;
+}
+
+.container {
+    width: min(100% - 2rem, 72rem);
+    margin-inline: auto;
+}
+
+.site-header {
+    background: #163a63;
+    color: #ffffff;
+}
+
+.header-content {
+    min-height: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.brand {
+    color: #ffffff;
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.user-navigation {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-navigation form {
+    margin: 0;
+}
+
+.link-button {
+    padding: 0;
+    border: 0;
+    color: #ffffff;
+    background: transparent;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.main-content {
+    padding-block: 2rem;
+}
+
+.auth-card {
+    width: min(100%, 32rem);
+    margin-inline: auto;
+    padding: 2rem;
+    border: 1px solid #d9e0ea;
+    border-radius: 0.75rem;
+    background: #ffffff;
+    box-shadow: 0 0.5rem 1.5rem rgb(20 42 74 / 8%);
+}
+
+.field {
+    display: grid;
+    gap: 0.4rem;
+    margin-block: 1rem;
+}
+
+label {
+    font-weight: 650;
+}
+
+input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #aeb9c8;
+    border-radius: 0.4rem;
+    font: inherit;
+}
+
+input:focus {
+    outline: 0.18rem solid rgb(32 111 196 / 25%);
+    border-color: #206fc4;
+}
+
+.primary-button {
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.8rem 1rem;
+    border: 0;
+    border-radius: 0.4rem;
+    color: #ffffff;
+    background: #0759b5;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.alert {
+    margin-bottom: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 0.4rem;
+}
+
+.alert-error {
+    color: #7c1720;
+    background: #fde8ea;
+}
+
+.alert-warning {
+    color: #624500;
+    background: #fff3cd;
+}
+
+.alert-success {
+    color: #14532d;
+    background: #dcfce7;
+}
+
+.alert-info {
+    color: #164e63;
+    background: #cffafe;
+}
+
+.muted {
+    color: #5f6b7a;
+}
+
+.summary-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.summary-list div {
+    padding: 1rem;
+    border: 1px solid #d9e0ea;
+    border-radius: 0.5rem;
+    background: #ffffff;
+}
+
+.summary-list dt {
+    font-weight: 700;
+}
+
+.summary-list dd {
+    margin: 0.3rem 0 0;
+}
+
+@media (max-width: 40rem) {
+    .header-content,
+    .user-navigation {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .header-content {
+        padding-block: 1rem;
+    }
+
+    .auth-card {
+        padding: 1.25rem;
+    }
+}
