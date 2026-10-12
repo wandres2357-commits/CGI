@@ -423,13 +423,15 @@ final class UserAdministrationService
                 && $roleCode
                     === self::ROLE_ADMINISTRATOR;
 
-            if (
+                        if (
                 $isPromotion
                 && !$this->verifyActorPassword(
                     $actor,
                     $actorPassword
                 )
             ) {
+                $this->pdo->rollBack();
+
                 $this->auditFailure(
                     actorUserId: $actorUserId,
                     action: 'EDITAR_USUARIO',
@@ -439,8 +441,6 @@ final class UserAdministrationService
                     ipAddress: $ipAddress,
                     userAgent: $userAgent
                 );
-
-                $this->pdo->rollBack();
 
                 $this->clearSensitiveValue(
                     $actorPassword
@@ -664,13 +664,15 @@ final class UserAdministrationService
                 && $target['rol_codigo']
                     === self::ROLE_ADMINISTRATOR;
 
-            if (
+                        if (
                 $isAdministratorDeactivation
                 && !$this->verifyActorPassword(
                     $actor,
                     $actorPassword
                 )
             ) {
+                $this->pdo->rollBack();
+
                 $this->auditFailure(
                     actorUserId: $actorUserId,
                     action:
@@ -681,8 +683,6 @@ final class UserAdministrationService
                     ipAddress: $ipAddress,
                     userAgent: $userAgent
                 );
-
-                $this->pdo->rollBack();
 
                 $this->clearSensitiveValue(
                     $actorPassword
