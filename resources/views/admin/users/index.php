@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Auth\SessionManager;
 use App\Http\View;
+use App\Security\Csrf;
 
 $items = is_array($result['items'] ?? null)
     ? $result['items']
@@ -319,9 +320,63 @@ $buildPageUrl = static function (
                             </td>
 
                             <td>
-                                <span class="muted">
-                                    Disponible en 6.3B
-                                </span>
+                                /administracion/usuarios/<?= (int) $user['id'] ?>/editar
+                                    Editar
+                                </a>
+
+                                <?php if (
+                                    (int) $user['id']
+                                    !== $currentUserId
+                                ): ?>
+                                    /administracion/usuarios/<?= (int) $user['id'] ?>/estado
+                                        <input
+                                            type="hidden"
+                                            name="_token"
+                                            value="<?= View::escape(
+                                                Csrf::generate(
+                                                    'admin_user_state_'
+                                                    . (int) $user['id']
+                                                )
+                                            ) ?>"
+                                        >
+
+                                        <input
+                                            type="hidden"
+                                            name="active"
+                                            value="<?=
+                                                $user['activo']
+                                                    ? '0'
+                                                    : '1'
+                                            ?>"
+                                        >
+
+                                        <?php if (
+                                            $user['rol_codigo']
+                                            === 'ADMINISTRADOR'
+                                            && $user['activo']
+                                        ): ?>
+                                            <input
+                                                name="actor_password"
+                                                type="password"
+                                                maxlength="128"
+                                                placeholder="Contraseña actual"
+                                                autocomplete="current-password"
+                                                required
+                                            >
+                                        <?php endif; ?>
+
+                                        <button
+                                            class="link-button-dark"
+                                            type="submit"
+                                        >
+                                            <?=
+                                                $user['activo']
+                                                    ? 'Desactivar'
+                                                    : 'Activar'
+                                            ?>
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
