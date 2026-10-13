@@ -540,7 +540,7 @@ final class UserAdministrationController
         exit;
     }
 
-        private function update(
+    private function update(
         int $userId
     ): never {
         Authorization::requireRole(
@@ -615,7 +615,9 @@ final class UserAdministrationController
             actorPassword:
                 $actorPassword,
             ipAddress:
-            private function changeState(
+    }
+
+    private function changeState(
         int $userId
     ): never {
         Authorization::requireRole(
