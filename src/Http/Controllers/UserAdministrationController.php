@@ -99,6 +99,32 @@ final class UserAdministrationController
             return true;
         }
 
+        if (
+            preg_match(
+                '#^/administracion/usuarios/([1-9][0-9]*)/restablecer-password$#',
+                $path,
+                $matches
+            ) === 1
+        ) {
+            $userId = (int) $matches[1];
+
+            if ($method === 'GET') {
+                $this->showPasswordReset(
+                    $userId
+                );
+
+                return true;
+            }
+
+            if ($method === 'POST') {
+                $this->resetPassword(
+                    $userId
+                );
+
+                return true;
+            }
+        }
+
         return false;
     }
 
@@ -768,6 +794,239 @@ final class UserAdministrationController
 
         Response::redirect(
             '/administracion/usuarios'
+        );
+    }
+
+    private function showPasswordReset(
+        int $userId
+    ): never {
+        Authorization::requireRole(
+            'ADMINISTRADOR'
+        );
+
+        $actorUserId =
+            SessionManager::userId();
+
+        if ($actorUserId === null) {
+            SessionManager::destroy();
+
+            Response::redirect('/login');
+        }
+
+        if ($actorUserId === $userId) {
+            SessionManager::flash(
+                'warning',
+                'Para modificar su propia contraseña, '
+                . 'utilice Cambiar mi contraseña.'
+            );
+
+            Response::redirect(
+                '/cambiar-password'
+            );
+        }
+
+        $user = $this->service->getUser(
+            $userId
+        );
+
+        if ($user === null) {
+            SessionManager::flash(
+                'error',
+                'El usuario solicitado no existe.'
+            );
+
+            Response::redirect(
+                '/administracion/usuarios'
+            );
+        }
+
+        View::render(
+            'admin/users/reset-password',
+            [
+                'title' =>
+                    'Restablecer contraseña',
+                'user' => $user,
+                'errors' => [],
+            ]
+        );
+
+        exit;
+    }
+
+    private function resetPassword(
+        int $userId
+    ): never {
+        Authorization::requireRole(
+            'ADMINISTRADOR'
+        );
+
+        if (
+            !Csrf::validate(
+                'admin_reset_password_'
+                . $userId,
+                Request::postRawString('_token')
+            )
+        ) {
+            SessionManager::flash(
+                'error',
+                'La solicitud no es válida.'
+            );
+
+            Response::redirect(
+                '/administracion/usuarios/'
+                . $userId
+                . '/restablecer-password'
+            );
+        }
+
+        $actorUserId =
+            SessionManager::userId();
+
+        if ($actorUserId === null) {
+            SessionManager::destroy();
+
+            Response::redirect('/login');
+        }
+
+        if ($actorUserId === $userId) {
+            SessionManager::flash(
+                'warning',
+                'Para modificar su propia contraseña, '
+                . 'utilice Cambiar mi contraseña.'
+            );
+
+            Response::redirect(
+                '/cambiar-password'
+            );
+        }
+
+        $actorPassword =
+            Request::postRawString(
+                'actor_password'
+            );
+
+        $result =
+            $this->service
+                ->resetOtherUserPassword(
+                    actorUserId: $actorUserId,
+                    targetUserId: $userId,
+                    actorPassword:
+                        $actorPassword,
+                    ipAddress:
+                        Request::ipAddress(),
+                    userAgent:
+                        Request::userAgent()
+                );
+
+        if (
+            $actorPassword !== ''
+            && function_exists(
+                'sodium_memzero'
+            )
+        ) {
+            sodium_memzero(
+                $actorPassword
+            );
+        }
+
+        $actorPassword = '';
+
+        Csrf::clear(
+            'admin_reset_password_'
+            . $userId
+        );
+
+        if (!$result['successful']) {
+            $user = $this->service->getUser(
+                $userId
+            );
+
+            if ($user === null) {
+                Response::redirect(
+                    '/administracion/usuarios'
+                );
+            }
+
+            View::render(
+                'admin/users/reset-password',
+                [
+                    'title' =>
+                        'Restablecer contraseña',
+                    'user' => $user,
+                    'errors' => array_merge(
+                        [
+                            (string) $result[
+                                'message'
+                            ],
+                        ],
+                        array_map(
+                            'strval',
+                            $result['errors']
+                                ?? []
+                        )
+                    ),
+                ],
+                422
+            );
+
+            exit;
+        }
+
+        $temporaryPassword =
+            (string) (
+                $result[
+                    'temporary_password'
+                ]
+                ?? ''
+            );
+
+        if ($temporaryPassword === '') {
+            throw new RuntimeException(
+                'No fue posible recuperar '
+                . 'la contraseña temporal.'
+            );
+        }
+
+        $targetUser = $this->service
+            ->getUser($userId);
+
+        if ($targetUser === null) {
+            throw new RuntimeException(
+                'No fue posible recuperar '
+                . 'el usuario afectado.'
+            );
+        }
+
+        SessionManager::start();
+
+        $_SESSION[
+            'temporary_password_once'
+        ] = [
+            'password' =>
+                $temporaryPassword,
+            'user_id' =>
+                (int) $targetUser['id'],
+            'username' =>
+                (string) $targetUser[
+                    'nombre_usuario'
+                ],
+            'full_name' =>
+                (string) $targetUser[
+                    'nombre_completo'
+                ],
+            'role' =>
+                (string) $targetUser[
+                    'rol_codigo'
+                ],
+            'operation' =>
+                'PASSWORD_RESET',
+            'created_at' => time(),
+        ];
+
+        $temporaryPassword = '';
+
+        Response::redirect(
+            '/administracion/usuarios/password-temporal'
         );
     }
 }

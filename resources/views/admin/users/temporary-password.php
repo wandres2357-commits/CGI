@@ -8,14 +8,31 @@ $password = (string) (
     $temporaryData['password'] ?? ''
 );
 
+$operation = (string) (
+    $temporaryData['operation']
+    ?? 'USER_CREATED'
+);
+
+$isPasswordReset =
+    $operation === 'PASSWORD_RESET';
+
 ?>
 <section class="secret-card">
-    <h1>Contraseña temporal generada</h1>
+    <h1>
+        <?=
+            $isPasswordReset
+                ? 'Contraseña restablecida'
+                : 'Contraseña temporal generada'
+        ?>
+    </h1>
 
     <div
         class="alert alert-warning"
         role="alert"
     >
+        <?php if ($isPasswordReset): ?>
+            La contraseña anterior dejó de ser válida.
+        <?php endif; ?>
         Copie esta contraseña ahora.
         Por seguridad, no volverá a mostrarse.
     </div>

@@ -434,3 +434,35 @@ select {
         width: 100%;
     }
 }
+.danger-button {
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.8rem 1rem;
+    border: 0;
+    border-radius: 0.4rem;
+    color: #ffffff;
+    background: #a61b29;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.danger-button:hover {
+    background: #841421;
+}
+
+.data-table td:last-child {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.45rem;
+}
+$path = '.\public\assets\css\app.css'
+$content = Get-Content $path -Raw
+$content = $content.TrimEnd() + "`n"
+
+[System.IO.File]::WriteAllText(
+    (Resolve-Path $path),
+    $content,
+    [System.Text.UTF8Encoding]::new($false)
+)
