@@ -555,7 +555,7 @@ final class UserAdministrationController
         ) {
             SessionManager::flash(
                 'error',
-                'La solicitud no es válida.'
+                'La solicitud no es valida.'
             );
 
             Response::redirect(
@@ -615,8 +615,76 @@ final class UserAdministrationController
             actorPassword:
                 $actorPassword,
             ipAddress:
-    }
+                Request::ipAddress(),
+            userAgent:
+                Request::userAgent()
+        );
 
+        if (
+            $actorPassword !== ''
+            && function_exists(
+                'sodium_memzero'
+            )
+        ) {
+            sodium_memzero(
+                $actorPassword
+            );
+        }
+
+        $actorPassword = '';
+
+        Csrf::clear(
+            'admin_edit_user_' . $userId
+        );
+
+        if (!$result['successful']) {
+            $user = $this->service
+                ->getUser($userId);
+
+            if ($user === null) {
+                Response::redirect(
+                    '/administracion/usuarios'
+                );
+            }
+
+            View::render(
+                'admin/users/edit',
+                [
+                    'title' =>
+                        'Editar usuario',
+                    'user' => $user,
+                    'roles' =>
+                        $this->service
+                            ->activeRoles(),
+                    'form' => $form,
+                    'errors' => array_merge(
+                        [
+                            (string) $result[
+                                'message'
+                            ],
+                        ],
+                        array_map(
+                            'strval',
+                            $result['errors']
+                                ?? []
+                        )
+                    ),
+                ],
+                422
+            );
+
+            exit;
+        }
+
+        SessionManager::flash(
+            'success',
+            (string) $result['message']
+        );
+
+        Response::redirect(
+            '/administracion/usuarios'
+        );
+    }
     private function changeState(
         int $userId
     ): never {
