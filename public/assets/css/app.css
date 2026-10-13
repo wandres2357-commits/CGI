@@ -394,3 +394,43 @@ select {
         text-align: center;
     }
 }
+.inline-action-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.35rem 0 0;
+}
+
+.inline-action-form input[type="password"] {
+    width: 10rem;
+    padding: 0.4rem 0.55rem;
+}
+
+.link-button-dark {
+    padding: 0.45rem 0.65rem;
+    border: 1px solid #9daabd;
+    border-radius: 0.35rem;
+    color: #25344a;
+    background: #ffffff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.link-button-dark:hover {
+    background: #eef4fb;
+}
+
+.data-table td:last-child {
+    min-width: 11rem;
+}
+
+@media (max-width: 40rem) {
+    .inline-action-form {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .inline-action-form input[type="password"] {
+        width: 100%;
+    }
+}

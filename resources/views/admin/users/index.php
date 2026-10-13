@@ -320,7 +320,7 @@ $buildPageUrl = static function (
                             </td>
 
                             <td>
-                                /administracion/usuarios/<?= (int) $user['id'] ?>/editar
+                                <a class="secondary-button" href="/administracion/usuarios/<?= (int) $user['id'] ?>/editar">
                                     Editar
                                 </a>
 
@@ -328,7 +328,7 @@ $buildPageUrl = static function (
                                     (int) $user['id']
                                     !== $currentUserId
                                 ): ?>
-                                    /administracion/usuarios/<?= (int) $user['id'] ?>/estado
+                                    <form class="inline-action-form" method="post" action="/administracion/usuarios/<?= (int) $user['id'] ?>/estado">
                                         <input
                                             type="hidden"
                                             name="_token"
