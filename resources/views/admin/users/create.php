@@ -20,7 +20,7 @@ $selectedRole =
             </p>
         </div>
 
-        /administracion/usuarios
+        <a class="secondary-button" href="/administracion/usuarios">
             Volver
         </a>
     </div>
@@ -47,7 +47,7 @@ $selectedRole =
         </div>
     <?php endif; ?>
 
-    /administracion/usuarios/crear
+    <form class="admin-form" method="post" action="/administracion/usuarios/crear">
         <input
             type="hidden"
             name="_token"

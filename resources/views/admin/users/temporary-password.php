@@ -77,7 +77,7 @@ $password = (string) (
         </p>
     </div>
 
-    /administracion/usuarios
+    <a class="secondary-button" href="/administracion/usuarios">
         Volver a usuarios
     </a>
 </section>
