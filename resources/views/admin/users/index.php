@@ -328,6 +328,10 @@ $buildPageUrl = static function (
                                     (int) $user['id']
                                     !== $currentUserId
                                 ): ?>
+                                    <a class="secondary-button" href="/administracion/usuarios/<?= (int) $user['id'] ?>/restablecer-password">
+                                        Restablecer contraseña
+                                    </a>
+
                                     <form class="inline-action-form" method="post" action="/administracion/usuarios/<?= (int) $user['id'] ?>/estado">
                                         <input
                                             type="hidden"
