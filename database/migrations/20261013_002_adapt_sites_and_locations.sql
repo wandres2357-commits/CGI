@@ -330,6 +330,10 @@ ALTER TABLE ubicaciones
 
 -- =========================================================
 -- 10. RELACIONES, INDICES Y RESTRICCIONES
+-- La regla que impide usar la propia ubicacion como padre,
+-- la pertenencia del padre a la misma sede y la prevencion
+-- de ciclos se validaran en la capa de servicio.
+-- MariaDB no permite usar id AUTO_INCREMENT en este CHECK.
 -- =========================================================
 
 ALTER TABLE ubicaciones
@@ -382,10 +386,4 @@ ALTER TABLE ubicaciones
     ADD CONSTRAINT chk_ubicaciones_nombre_no_vacio
         CHECK (
             CHAR_LENGTH(TRIM(nombre)) > 0
-        ),
-
-    ADD CONSTRAINT chk_ubicaciones_padre_distinto
-        CHECK (
-            ubicacion_padre_id IS NULL
-            OR ubicacion_padre_id <> id
         );
