@@ -16,6 +16,9 @@ use App\Security\Csrf;
 use App\Services\AuditService;
 use App\Auth\PasswordService;
 use App\Http\Controllers\UserAdministrationController;
+use App\Http\Controllers\SiteLocationController;
+use App\Repositories\SiteLocationRepository;
+use App\Services\SiteLocationService;
 use App\Repositories\UserAdministrationRepository;
 use App\Security\TemporaryPasswordGenerator;
 use App\Services\UserAdministrationService;
@@ -92,6 +95,21 @@ $userAdministrationController =
         $userAdministrationService
     );
 
+$siteLocationRepository =
+    new SiteLocationRepository(
+        $pdo
+    );
+
+$siteLocationService =
+    new SiteLocationService(
+        $siteLocationRepository
+    );
+
+$siteLocationController =
+    new SiteLocationController(
+        $siteLocationService
+    );
+
 SessionManager::start();
 
 try {
@@ -131,6 +149,16 @@ $path = Request::path();
 try {
     if (
         $userAdministrationController
+            ->handle(
+                $method,
+                $path
+            )
+    ) {
+        exit;
+    }
+
+    if (
+        $siteLocationController
             ->handle(
                 $method,
                 $path

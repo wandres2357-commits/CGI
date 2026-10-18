@@ -12,7 +12,6 @@ $pageTitle = isset($title)
 
 $user = SessionManager::user();
 $flashMessages = SessionManager::consumeFlash();
-
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -48,6 +47,37 @@ $flashMessages = SessionManager::consumeFlash();
 
             <?php if ($user !== null): ?>
                 <nav class="user-navigation">
+                    <a class="header-link" href="/panel">
+                        Panel
+                    </a>
+
+                    <?php if (
+                        SessionManager::hasRole(
+                            'ADMINISTRADOR'
+                        )
+                    ): ?>
+                        <a
+                            class="header-link"
+                            href="/administracion/usuarios"
+                        >
+                            Usuarios
+                        </a>
+
+                        <a
+                            class="header-link"
+                            href="/admin/sedes"
+                        >
+                            Sedes
+                        </a>
+
+                        <a
+                            class="header-link"
+                            href="/admin/ubicaciones"
+                        >
+                            Ubicaciones
+                        </a>
+                    <?php endif; ?>
+
                     <span>
                         <?= View::escape(
                             $user['nombre_completo']
@@ -67,7 +97,7 @@ $flashMessages = SessionManager::consumeFlash();
                             class="link-button"
                             type="submit"
                         >
-                            Cerrar sesion
+                            Cerrar sesión
                         </button>
                     </form>
                 </nav>
@@ -93,5 +123,7 @@ $flashMessages = SessionManager::consumeFlash();
 
         <?= $content ?>
     </main>
+
+    <script src="/assets/js/site-locations.js"></script>
 </body>
 </html>

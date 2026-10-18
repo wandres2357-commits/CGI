@@ -457,12 +457,13 @@ select {
     align-items: flex-start;
     gap: 0.45rem;
 }
-$path = '.\public\assets\css\app.css'
-$content = Get-Content $path -Raw
-$content = $content.TrimEnd() + "`n"
+.header-link {
+    color: #ffffff;
+    font-weight: 650;
+    text-decoration: none;
+}
 
-[System.IO.File]::WriteAllText(
-    (Resolve-Path $path),
-    $content,
-    [System.Text.UTF8Encoding]::new($false)
-)
+.header-link:hover,
+.header-link:focus {
+    text-decoration: underline;
+}
