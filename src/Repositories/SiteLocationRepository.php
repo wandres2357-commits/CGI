@@ -71,8 +71,29 @@ final class SiteLocationRepository
         $filters = [];
         $parameters = [];
         if ($search !== '') {
-            $filters[] = '(s.codigo LIKE :search OR s.nombre LIKE :search OR s.direccion LIKE :search OR s.ciudad LIKE :search OR s.departamento LIKE :search)';
-            $parameters['search'] = '%' . $search . '%';
+            $filters[] = '(s.codigo LIKE :search_code OR s.nombre LIKE :search_name OR s.direccion LIKE :search_address OR s.ciudad LIKE :search_city OR s.departamento LIKE :search_department)';
+            $searchValue =
+                '%' . $search . '%';
+
+            $parameters[
+                'search_code'
+            ] = $searchValue;
+
+            $parameters[
+                'search_name'
+            ] = $searchValue;
+
+            $parameters[
+                'search_address'
+            ] = $searchValue;
+
+            $parameters[
+                'search_city'
+            ] = $searchValue;
+
+            $parameters[
+                'search_department'
+            ] = $searchValue;
         }
         if ($active !== null) {
             $filters[] = 's.activo = :active';
@@ -95,8 +116,29 @@ final class SiteLocationRepository
         $filters = [];
         $parameters = [];
         if ($search !== '') {
-            $filters[] = '(codigo LIKE :search OR nombre LIKE :search OR direccion LIKE :search OR ciudad LIKE :search OR departamento LIKE :search)';
-            $parameters['search'] = '%' . $search . '%';
+            $filters[] = '(codigo LIKE :search_code OR nombre LIKE :search_name OR direccion LIKE :search_address OR ciudad LIKE :search_city OR departamento LIKE :search_department)';
+            $searchValue =
+                '%' . $search . '%';
+
+            $parameters[
+                'search_code'
+            ] = $searchValue;
+
+            $parameters[
+                'search_name'
+            ] = $searchValue;
+
+            $parameters[
+                'search_address'
+            ] = $searchValue;
+
+            $parameters[
+                'search_city'
+            ] = $searchValue;
+
+            $parameters[
+                'search_department'
+            ] = $searchValue;
         }
         if ($active !== null) {
             $filters[] = 'activo = :active';
@@ -183,7 +225,7 @@ final class SiteLocationRepository
     public function listLocations(string $search = '', ?int $siteId = null, ?int $typeId = null, ?bool $active = null, ?int $parentId = null, int $limit = 20, int $offset = 0): array
     {
         $filters=[]; $parameters=[];
-        if ($search !== '') { $filters[]='(u.codigo LIKE :search OR u.nombre LIKE :search OR u.detalle LIKE :search OR s.nombre LIKE :search OR t.nombre LIKE :search)'; $parameters['search']='%'.$search.'%'; }
+        if ($search !== '') { $filters[]='(u.codigo LIKE :search_code OR u.nombre LIKE :search_name OR u.detalle LIKE :search_detail OR s.nombre LIKE :search_site OR t.nombre LIKE :search_type)'; $searchValue='%'.$search.'%';$parameters['search_code']=$searchValue;$parameters['search_name']=$searchValue;$parameters['search_detail']=$searchValue;$parameters['search_site']=$searchValue;$parameters['search_type']=$searchValue; }
         if ($siteId !== null) { $filters[]='u.sede_id=:site_id'; $parameters['site_id']=$siteId; }
         if ($typeId !== null) { $filters[]='u.tipo_ubicacion_id=:type_id'; $parameters['type_id']=$typeId; }
         if ($active !== null) { $filters[]='u.activo=:active'; $parameters['active']=$active?1:0; }
@@ -201,7 +243,7 @@ final class SiteLocationRepository
     public function countLocations(string $search = '', ?int $siteId = null, ?int $typeId = null, ?bool $active = null): int
     {
         $filters=[]; $parameters=[];
-        if($search!==''){$filters[]='(u.codigo LIKE :search OR u.nombre LIKE :search OR u.detalle LIKE :search OR s.nombre LIKE :search OR t.nombre LIKE :search)';$parameters['search']='%'.$search.'%';}
+        if($search!==''){$filters[]='(u.codigo LIKE :search_code OR u.nombre LIKE :search_name OR u.detalle LIKE :search_detail OR s.nombre LIKE :search_site OR t.nombre LIKE :search_type)';$searchValue='%'.$search.'%';$parameters['search_code']=$searchValue;$parameters['search_name']=$searchValue;$parameters['search_detail']=$searchValue;$parameters['search_site']=$searchValue;$parameters['search_type']=$searchValue;}
         if($siteId!==null){$filters[]='u.sede_id=:site_id';$parameters['site_id']=$siteId;}
         if($typeId!==null){$filters[]='u.tipo_ubicacion_id=:type_id';$parameters['type_id']=$typeId;}
         if($active!==null){$filters[]='u.activo=:active';$parameters['active']=$active?1:0;}
