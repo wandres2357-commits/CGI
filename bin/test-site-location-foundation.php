@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 use App\Database\Connection;
 use App\Services\SiteLocationService;
-use PDO;
-use RuntimeException;
-use Throwable;
 
 require dirname(__DIR__) . '/bootstrap/bootstrap.php';
 
